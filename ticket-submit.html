@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PropOS — Report an Issue</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F4FF;--surf:#FFFFFF;--border:#D8E4FF;
+  --accent:#3B5BDB;--accent-dark:#2748C4;--accent-light:#EEF2FF;
+  --text:#0D1B4B;--muted:#5C6E99;--success:#059669;--warn:#D97706;--danger:#DC2626;
+  --radius:12px;--shadow:0 4px 24px rgba(59,91,219,.1);
+}
+html,body{min-height:100%;background:var(--bg);font-family:'Epilogue',sans-serif;color:var(--text)}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.back-btn{width:34px;height:34px;border-radius:8px;background:var(--accent-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;flex-shrink:0}
+.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)}
+.topbar-unit{font-size:11px;color:var(--muted);margin-top:1px}
+.body{flex:1;padding:20px;display:flex;flex-direction:column;gap:16px}
+.step{display:none;flex-direction:column;gap:14px;animation:fadeUp .25s ease both}
+.step.active{display:flex}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.step-bar{display:flex;align-items:center;gap:0;margin-bottom:4px}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;border:2px solid var(--border);color:var(--muted);background:var(--surf);flex-shrink:0;transition:all .2s}
+.step-dot.done{background:var(--accent);border-color:var(--accent);color:white}
+.step-dot.active{background:var(--accent);border-color:var(--accent);color:white;box-shadow:0 0 0 4px rgba(59,91,219,.15)}
+.step-line{flex:1;height:2px;background:var(--border);transition:background .3s}
+.step-line.done{background:var(--accent)}
+.step-labels{display:flex;justify-content:space-between;margin-top:5px}
+.step-label{font-size:10px;color:var(--muted);font-weight:500;text-align:center;flex:1}
+.step-label.active{color:var(--accent);font-weight:600}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.card-sub{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:14px}
+.mode-btn{width:100%;padding:18px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surf);cursor:pointer;font-family:'Epilogue',sans-serif;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s;margin-bottom:10px}
+.mode-btn:last-child{margin-bottom:0}
+.mode-btn:hover{border-color:var(--accent);background:var(--accent-light)}
+.mode-icon{font-size:32px}
+.mode-title{font-size:15px;font-weight:600;color:var(--text)}
+.mode-desc{font-size:12px;color:var(--muted)}
+.photo-area{border:2px dashed var(--border);border-radius:var(--radius);padding:28px 20px;text-align:center;background:var(--surf);position:relative;cursor:pointer;transition:all .2s}
+.photo-area:hover{border-color:var(--accent);background:var(--accent-light)}
+.photo-area.has-img{padding:0;border-style:solid;border-color:var(--accent);cursor:default}
+.photo-area img{width:100%;border-radius:10px;display:block;max-height:260px;object-fit:cover}
+.photo-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-area.has-img input[type=file]{display:none}
+.photo-ph-icon{font-size:38px;margin-bottom:10px}
+.photo-ph-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.photo-ph-sub{font-size:12px;color:var(--muted)}
+.change-btn{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:white;border:none;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Epilogue',sans-serif}
+.primary-btn{width:100%;padding:14px;border-radius:var(--radius);background:var(--accent);color:white;border:none;font-family:'Epilogue',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+.primary-btn:hover{background:var(--accent-dark)}
+.primary-btn:disabled{opacity:.45;cursor:not-allowed}
+.loading{text-align:center;padding:28px 20px}
+.spinner{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px}
+.loading-sub{font-size:13px;color:var(--muted)}
+.result-card{background:var(--accent-light);border:1px solid rgba(59,91,219,.2);border-radius:var(--radius);padding:16px}
+.result-badge{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:block}
+.result-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(59,91,219,.1);gap:12px}
+.result-row:last-child{border-bottom:none}
+.rk{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;flex-shrink:0}
+.rv{font-size:13px;color:var(--text);font-weight:500;text-align:right;line-height:1.4}
+.pHigh{color:var(--danger);font-weight:700}
+.pMedium{color:var(--warn);font-weight:700}
+.pLow{color:var(--success);font-weight:700}
+.two-btn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-yes{padding:13px;border-radius:var(--radius);background:var(--accent);color:white;border:none;font-family:'Epilogue',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-yes:hover{background:var(--accent-dark)}
+.btn-edit{padding:13px;border-radius:var(--radius);background:var(--surf);color:var(--text);border:1px solid var(--border);font-family:'Epilogue',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-edit:hover{border-color:var(--accent);color:var(--accent)}
+.form-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.form-input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Epilogue',sans-serif;outline:none;transition:border-color .15s;width:100%}
+.form-input:focus{border-color:var(--accent)}
+select.form-input{cursor:pointer}
+textarea.form-input{resize:vertical;min-height:88px}
+.success-ico{width:64px;height:64px;border-radius:50%;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px}
+.success-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);text-align:center;margin-bottom:5px}
+.success-sub{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:16px}
+.ticket-ref{background:var(--accent-light);border:1px solid rgba(59,91,219,.2);border-radius:var(--radius);padding:14px;text-align:center;margin-bottom:14px}
+.ticket-ref-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.ticket-ref-num{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--accent)}
+.detail-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.dk{color:var(--muted)}
+.dv{color:var(--text);font-weight:500}
+.ghost-btn{width:100%;padding:13px;border-radius:var(--radius);background:var(--accent-light);color:var(--accent);border:1px solid rgba(59,91,219,.2);font-family:'Epilogue',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;transition:all .2s}
+.ghost-btn:hover{background:var(--accent);color:white}
+.note{font-size:12px;color:var(--muted);line-height:1.5;padding:10px 13px;background:var(--surf);border-radius:8px;border-left:3px solid var(--border)}
+.util-banner{background:linear-gradient(135deg,#EFF4FF,#F0EEFF);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;gap:12px;align-items:flex-start}
+.util-ico{width:36px;height:36px;border-radius:8px;background:rgba(59,91,219,.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.util-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.util-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.util-time{font-size:11px;color:var(--accent);font-weight:500;margin-top:4px}
+.err-box{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:12px 14px;font-size:13px;color:#991B1B;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()">&#8592;</button>
+    <div>
+      <div class="topbar-title">Report an Issue</div>
+      <div class="topbar-unit">Unit 3B &middot; Maple Ave &middot; Sarah K.</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Step indicator -->
+    <div>
+      <div class="step-bar">
+        <div class="step-dot active" id="d0">1</div>
+        <div class="step-line" id="l0"></div>
+        <div class="step-dot" id="d1">2</div>
+        <div class="step-line" id="l1"></div>
+        <div class="step-dot" id="d2">3</div>
+        <div class="step-line" id="l2"></div>
+        <div class="step-dot" id="d3">4</div>
+      </div>
+      <div class="step-labels">
+        <span class="step-label active" id="lb0">Method</span>
+        <span class="step-label" id="lb1">Upload</span>
+        <span class="step-label" id="lb2">Review</span>
+        <span class="step-label" id="lb3">Done</span>
+      </div>
+    </div>
+
+    <!-- Utility alert banner -->
+    <div class="util-banner">
+      <div class="util-ico">&#9889;</div>
+      <div>
+        <div class="util-title">Planned Gas Outage &mdash; Your Building</div>
+        <div class="util-desc">Gas service will be off June 12, 8AM&ndash;4PM. Hot water and heating unavailable.</div>
+        <div class="util-time">&#128197; Reminder sent 48 hrs before</div>
+      </div>
+    </div>
+
+    <!-- STEP 0: MODE SELECT -->
+    <div class="step active" id="s0">
+      <div class="card">
+        <div class="card-title">How do you want to report?</div>
+        <div class="card-sub">The photo option takes under 30 seconds &mdash; AI does the work for you.</div>
+        <button class="mode-btn" onclick="pickMode('photo')">
+          <span class="mode-icon">&#128247;</span>
+          <span class="mode-title">Take or upload a photo</span>
+          <span class="mode-desc">AI describes the issue automatically</span>
+        </button>
+        <button class="mode-btn" onclick="pickMode('manual')">
+          <span class="mode-icon">&#9999;&#65039;</span>
+          <span class="mode-title">Describe it myself</span>
+          <span class="mode-desc">Fill in a short form</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 1A: PHOTO -->
+    <div class="step" id="s1photo">
+      <div class="card">
+        <div class="card-title">Upload a photo of the issue</div>
+        <div class="card-sub">A clear, well-lit photo gives the best AI result.</div>
+        <div class="photo-area" id="photoArea">
+          <input type="file" id="fileInput" accept="image/*" onchange="onFileChange(event)">
+          <div id="phHolder">
+            <div class="photo-ph-icon">&#128247;</div>
+            <div class="photo-ph-title">Tap to take or upload a photo</div>
+            <div class="photo-ph-sub">JPEG &middot; PNG &middot; HEIC &middot; Max 10MB</div>
+          </div>
+          <img id="imgPreview" style="display:none" alt="Preview">
+        </div>
+        <button class="change-btn" id="changeBtn" style="display:none;position:relative;margin-top:8px;background:var(--accent-light);color:var(--accent);" onclick="changePhoto()">Change photo</button>
+      </div>
+      <button class="primary-btn" id="analyseBtn" disabled onclick="runAnalysis()">&#129302; Analyse with AI &rarr;</button>
+      <div class="note">Your photo is analysed by AI to identify the issue, category and priority. You confirm before anything is submitted.</div>
+    </div>
+
+    <!-- STEP 1B: MANUAL -->
+    <div class="step" id="s1manual">
+      <div class="card">
+        <div class="card-title">Describe the issue</div>
+        <div class="card-sub">The more detail you give, the faster we can fix it.</div>
+        <div class="form-field">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="mCat">
+            <option value="">Select a category</option>
+            <option>Plumbing</option><option>Electrical</option>
+            <option>Heating / Cooling</option><option>Structural</option>
+            <option>Appliance</option><option>Pest</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Description</label>
+          <textarea class="form-input" id="mDesc" placeholder="e.g. The kitchen tap has been dripping for 2 days."></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Where in your unit?</label>
+          <select class="form-input" id="mLoc">
+            <option value="">Select location</option>
+            <option>Kitchen</option><option>Bathroom</option>
+            <option>Living room</option><option>Bedroom</option>
+            <option>Hallway</option><option>Exterior</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">How urgent is it?</label>
+          <select class="form-input" id="mPrio">
+            <option value="">Select urgency</option>
+            <option value="High">High &mdash; needs urgent attention</option>
+            <option value="Medium">Medium &mdash; should be fixed soon</option>
+            <option value="Low">Low &mdash; when convenient</option>
+          </select>
+        </div>
+      </div>
+      <button class="primary-btn" onclick="submitManual()">Submit request &rarr;</button>
+    </div>
+
+    <!-- STEP 2: REVIEW -->
+    <div class="step" id="s2">
+      <!-- filled dynamically -->
+    </div>
+
+    <!-- STEP 3: SUCCESS -->
+    <div class="step" id="s3">
+      <div class="success-ico">&#10003;</div>
+      <div class="success-title">Request submitted!</div>
+      <div class="success-sub">Your request has been received. We will update you as soon as a technician is assigned.</div>
+      <div class="ticket-ref">
+        <div class="ticket-ref-lbl">Your ticket number</div>
+        <div class="ticket-ref-num" id="ticketNum">#MNT-0001</div>
+      </div>
+      <div class="card">
+        <div class="detail-row"><span class="dk">Issue</span><span class="dv" id="sIssue">&#8212;</span></div>
+        <div class="detail-row"><span class="dk">Category</span><span class="dv" id="sCat">&#8212;</span></div>
+        <div class="detail-row"><span class="dk">Priority</span><span class="dv" id="sPrio">&#8212;</span></div>
+        <div class="detail-row"><span class="dk">Submitted</span><span class="dv" id="sTime">&#8212;</span></div>
+        <div class="detail-row"><span class="dk">Status</span><span class="dv" style="color:var(--warn)">Awaiting assignment</span></div>
+      </div>
+      <div class="note">You will receive an email confirmation at sarah.k@email.com. High priority requests are assigned within 24 hours.</div>
+      <button class="ghost-btn" onclick="resetAll()">+ Report another issue</button>
+    </div>
+
+  </div>
+</div>
+<script>
+var mode = null;
+var result = null;
+var imgB64 = null;
+var imgMime = null;
+var ctr = Math.floor(Math.random()*800)+100;
+
+function setStep(n){
+  [0,1,2,3].forEach(function(i){
+    var d=document.getElementById('d'+i);
+    var lb=document.getElementById('lb'+i);
+    d.className='step-dot'+(i<n?' done':i===n?' active':'');
+    d.textContent=i<n?'\u2713':String(i+1);
+    if(lb) lb.className='step-label'+(i===n?' active':'');
+    if(i<3){var l=document.getElementById('l'+i);if(l)l.className='step-line'+(i<n?' done':'');}
+  });
+}
+
+function showStep(id,n){
+  document.querySelectorAll('.step').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById(id);
+  if(el)el.classList.add('active');
+  setStep(n);
+}
+
+function goBack(){showStep('s0',0);mode=null;}
+
+function pickMode(m){
+  mode=m;
+  if(m==='photo') showStep('s1photo',1);
+  else showStep('s1manual',1);
+}
+
+function onFileChange(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    imgB64=ev.target.result.split(',')[1];
+    imgMime=ev.target.result.split(';')[0].split(':')[1];
+    var prev=document.getElementById('imgPreview');
+    var holder=document.getElementById('phHolder');
+    var area=document.getElementById('photoArea');
+    var btn=document.getElementById('changeBtn');
+    prev.src=ev.target.result;
+    prev.style.display='block';
+    holder.style.display='none';
+    area.classList.add('has-img');
+    btn.style.display='inline-block';
+    document.getElementById('analyseBtn').disabled=false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function changePhoto(){
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  input.onchange=onFileChange;
+  input.click();
+}
+
+async function runAnalysis(){
+  showStep('s2',2);
+  document.getElementById('s2').innerHTML='<div class="card"><div class="loading"><div class="spinner"></div><div class="loading-title">Analysing your photo\u2026</div><div class="loading-sub">AI is identifying the issue, category and priority</div></div></div>';
+
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:600,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:imgMime,data:imgB64}},
+            {type:'text',text:'You are a property maintenance assistant. Analyse this photo of a maintenance issue in a rental property. Return ONLY raw JSON with no markdown formatting, no code blocks, no backticks. Return exactly these keys: issue (short title max 8 words), category (one of: Plumbing, Electrical, Heating/Cooling, Structural, Appliance, Pest, Other), location (Kitchen/Bathroom/Living room/Bedroom/Hallway/Exterior/Unknown), priority (High/Medium/Low), description (2 sentences max describing what you see and the risk). If unclear still return valid JSON with best assessment.'}
+          ]
+        }]
+      })
+    });
+    var data=await resp.json();
+    var raw=data.content&&data.content[0]?data.content[0].text:'';
+    raw=raw.replace(/```json|```/g,'').trim();
+    result=JSON.parse(raw);
+  }catch(err){
+    showFallback(err);
+    return;
+  }
+  renderReview();
+}
+
+function showFallback(err){
+  document.getElementById('s2').innerHTML='<div class="card"><div class="err-box"><b>AI analysis could not complete.</b><br><br>This usually happens when the file is opened directly from your desktop (file://) rather than through a web server. The browser blocks API calls for security in that case.<br><br>To fix: open the file through a local server, or use the manual description option instead.</div></div><button class="primary-btn" style="margin-top:4px" onclick="pickMode(\'manual\')">Switch to manual \u2192</button>';
+}
+
+function renderReview(){
+  var pClass='p'+result.priority;
+  var pIcon=result.priority==='High'?'\uD83D\uDD34':result.priority==='Medium'?'\uD83D\uDFE1':'\uD83D\uDFE2';
+  document.getElementById('s2').innerHTML=
+    '<div class="card">'+
+      '<div class="card-title">We analysed your photo</div>'+
+      '<div class="card-sub">Review what the AI found. Confirm to submit or tap Edit to change anything.</div>'+
+      '<div class="result-card">'+
+        '<span class="result-badge">\uD83E\uDD16 AI Analysis</span>'+
+        '<div class="result-row"><span class="rk">Issue</span><span class="rv">'+esc(result.issue)+'</span></div>'+
+        '<div class="result-row"><span class="rk">Category</span><span class="rv">'+esc(result.category)+'</span></div>'+
+        '<div class="result-row"><span class="rk">Location</span><span class="rv">'+esc(result.location)+'</span></div>'+
+        '<div class="result-row"><span class="rk">Priority</span><span class="rv '+pClass+'">'+pIcon+' '+esc(result.priority)+'</span></div>'+
+        '<div class="result-row"><span class="rk">Description</span><span class="rv" style="max-width:210px">'+esc(result.description)+'</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="two-btn">'+
+      '<button class="btn-yes" onclick="confirmSubmit()">\u2713 Yes, submit</button>'+
+      '<button class="btn-edit" onclick="goEdit()">\u270F\uFE0F Edit</button>'+
+    '</div>'+
+    '<div class="note">Not right? Tap Edit to correct details before submitting.</div>';
+}
+
+function esc(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function goEdit(){
+  mode='manual';
+  showStep('s1manual',1);
+  if(result){
+    document.getElementById('mCat').value=result.category||'';
+    document.getElementById('mDesc').value=result.description||'';
+    document.getElementById('mLoc').value=result.location||'';
+    document.getElementById('mPrio').value=result.priority||'';
+  }
+}
+
+function submitManual(){
+  var cat=document.getElementById('mCat').value;
+  var desc=document.getElementById('mDesc').value.trim();
+  var loc=document.getElementById('mLoc').value;
+  var prio=document.getElementById('mPrio').value;
+  if(!cat||!desc||!loc||!prio){alert('Please fill in all fields.');return;}
+  result={issue:desc.slice(0,55),category:cat,location:loc,priority:prio,description:desc};
+  showSuccess();
+}
+
+function confirmSubmit(){showSuccess();}
+
+function showSuccess(){
+  ctr++;
+  var num='#MNT-'+String(ctr).padStart(4,'0');
+  var now=new Date();
+  var ts=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  showStep('s3',3);
+  document.getElementById('ticketNum').textContent=num;
+  document.getElementById('sIssue').textContent=result?result.issue:'--';
+  document.getElementById('sCat').textContent=result?result.category:'--';
+  document.getElementById('sPrio').textContent=result?result.priority:'--';
+  document.getElementById('sTime').textContent=ts;
+}
+
+function resetAll(){
+  mode=null;result=null;imgB64=null;imgMime=null;
+  document.getElementById('imgPreview').style.display='none';
+  document.getElementById('phHolder').style.display='block';
+  document.getElementById('photoArea').classList.remove('has-img');
+  document.getElementById('changeBtn').style.display='none';
+  document.getElementById('analyseBtn').disabled=true;
+  ['mCat','mDesc','mLoc','mPrio'].forEach(function(id){document.getElementById(id).value='';});
+  showStep('s0',0);
+}
+</script>
+</body>
+</html>
