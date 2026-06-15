@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PropOS — Report an Issue</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Epilogue:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F4FF;--surf:#fff;--border:#D8E4FF;
+  --accent:#3B5BDB;--adark:#2748C4;--alight:#EEF2FF;
+  --text:#0D1B4B;--muted:#5C6E99;--ok:#059669;--warn:#D97706;--err:#DC2626;
+  --r:12px;
+}
+html,body{min-height:100%;background:var(--bg);font-family:'Epilogue',sans-serif;color:var(--text);-webkit-text-size-adjust:100%}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:40px}
+/* TOPBAR */
+.topbar{background:var(--surf);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:20;box-shadow:0 2px 12px rgba(59,91,219,.06)}
+.back{width:36px;height:36px;border-radius:9px;background:var(--alight);border:none;cursor:pointer;color:var(--accent);font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.tb-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text)}
+.tb-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.body{flex:1;padding:18px 16px;display:flex;flex-direction:column;gap:14px}
+/* STEPS */
+.step{display:none;flex-direction:column;gap:14px}
+.step.on{display:flex;animation:fu .22s ease both}
+@keyframes fu{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+/* STEP BAR */
+.sbar{display:flex;align-items:center}
+.sdot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid var(--border);color:var(--muted);background:var(--surf);flex-shrink:0;transition:all .2s}
+.sdot.done{background:var(--accent);border-color:var(--accent);color:#fff}
+.sdot.cur{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 0 4px rgba(59,91,219,.18)}
+.sline{flex:1;height:2px;background:var(--border);transition:background .3s}
+.sline.done{background:var(--accent)}
+.slbls{display:flex;justify-content:space-between;margin-top:5px}
+.slbl{font-size:10px;color:var(--muted);font-weight:500;text-align:center;flex:1}
+.slbl.cur{color:var(--accent);font-weight:700}
+/* CARD */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:0 2px 16px rgba(59,91,219,.07)}
+.ctitle{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px}
+.csub{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:14px}
+/* MODE BUTTONS */
+.mode-btn{width:100%;padding:18px 16px;border-radius:var(--r);border:2px solid var(--border);background:var(--surf);cursor:pointer;font-family:'Epilogue',sans-serif;display:flex;align-items:center;gap:14px;transition:all .2s;margin-bottom:10px;text-align:left;-webkit-tap-highlight-color:transparent}
+.mode-btn:last-child{margin-bottom:0}
+.mode-btn:active{border-color:var(--accent);background:var(--alight)}
+.mico{font-size:30px;flex-shrink:0;width:40px;text-align:center}
+.mtitle{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.mdesc{font-size:12px;color:var(--muted);line-height:1.4}
+/* PHOTO GRID */
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+.pcell{aspect-ratio:1;border-radius:10px;border:2px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.pcell:active{border-color:var(--accent);background:var(--alight)}
+.pcell.filled{border-style:solid;border-color:var(--accent);cursor:default}
+.pcell img{width:100%;height:100%;object-fit:cover}
+.pcell .rm{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;z-index:2}
+.pcell .addico{font-size:24px;color:var(--muted);pointer-events:none}
+.pcell input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pcell.filled input{display:none}
+.pcount{font-size:12px;color:var(--muted);text-align:center}
+/* FORM */
+.ff{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.fl{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.fi{background:var(--bg);border:1.5px solid var(--border);border-radius:9px;padding:11px 13px;font-size:14px;color:var(--text);font-family:'Epilogue',sans-serif;outline:none;transition:border-color .15s;width:100%;-webkit-appearance:none}
+.fi:focus{border-color:var(--accent)}
+select.fi{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235C6E99' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px}
+textarea.fi{resize:vertical;min-height:90px;line-height:1.5}
+/* BUTTONS */
+.pbtn{width:100%;padding:15px;border-radius:var(--r);background:var(--accent);color:#fff;border:none;font-family:'Epilogue',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;-webkit-tap-highlight-color:transparent;letter-spacing:.01em}
+.pbtn:active{background:var(--adark);transform:scale(.98)}
+.pbtn:disabled{opacity:.4;cursor:not-allowed}
+.gbtn{width:100%;padding:14px;border-radius:var(--r);background:var(--alight);color:var(--accent);border:1.5px solid rgba(59,91,219,.2);font-family:'Epilogue',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.gbtn:active{background:var(--accent);color:#fff}
+.twobtn{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ybtn{padding:14px;border-radius:var(--r);background:var(--accent);color:#fff;border:none;font-family:'Epilogue',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.ybtn:active{background:var(--adark)}
+.ebtn{padding:14px;border-radius:var(--r);background:var(--surf);color:var(--text);border:1.5px solid var(--border);font-family:'Epilogue',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.ebtn:active{border-color:var(--accent);color:var(--accent)}
+/* RESULT */
+.rcard{background:var(--alight);border:1px solid rgba(59,91,219,.2);border-radius:var(--r);padding:16px}
+.rbadge{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:block}
+.rrow{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(59,91,219,.1);gap:12px}
+.rrow:last-child{border-bottom:none}
+.rk{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;flex-shrink:0;text-transform:uppercase;letter-spacing:.03em}
+.rv{font-size:13px;color:var(--text);font-weight:600;text-align:right;line-height:1.4;max-width:220px}
+.pH{color:var(--err)}.pM{color:var(--warn)}.pL{color:var(--ok)}
+/* LOADING */
+.loading{text-align:center;padding:28px 16px}
+.spin{width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.lt{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px}
+.ls{font-size:13px;color:var(--muted)}
+/* SUCCESS */
+.sico{width:68px;height:68px;border-radius:50%;background:#D1FAE5;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 14px}
+.stitle{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);text-align:center;margin-bottom:6px}
+.ssub{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:16px}
+.tref{background:var(--alight);border:1.5px solid rgba(59,91,219,.2);border-radius:var(--r);padding:14px;text-align:center;margin-bottom:14px}
+.tref-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.tref-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent)}
+.drow{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border)}
+.drow:last-child{border-bottom:none}
+.dk{color:var(--muted);font-weight:500}.dv{color:var(--text);font-weight:700}
+/* THUMBS */
+.thumbs{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.thumb{width:58px;height:58px;border-radius:8px;object-fit:cover;border:1.5px solid var(--border)}
+/* UTIL BANNER */
+.ubanner{background:linear-gradient(135deg,#EFF4FF,#F0EEFF);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;display:flex;gap:12px;align-items:flex-start}
+.uico{width:38px;height:38px;border-radius:9px;background:rgba(59,91,219,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.utitle{font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px}
+.udesc{font-size:12px;color:var(--muted);line-height:1.45}
+.utime{font-size:11px;color:var(--accent);font-weight:600;margin-top:4px}
+.note{font-size:12px;color:var(--muted);line-height:1.55;padding:10px 13px;background:var(--surf);border-radius:9px;border-left:3px solid var(--border)}
+.sep{height:1px;background:var(--border);margin:4px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="back" onclick="goBack()" aria-label="Back">&#8592;</button>
+    <div>
+      <div class="tb-title">Report an Issue</div>
+      <div class="tb-sub">Unit 3B &middot; Maple Ave &middot; Sarah K.</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Step bar -->
+    <div>
+      <div class="sbar">
+        <div class="sdot cur" id="d0">1</div>
+        <div class="sline" id="l0"></div>
+        <div class="sdot" id="d1">2</div>
+        <div class="sline" id="l1"></div>
+        <div class="sdot" id="d2">3</div>
+        <div class="sline" id="l2"></div>
+        <div class="sdot" id="d3">4</div>
+      </div>
+      <div class="slbls">
+        <span class="slbl cur" id="lb0">Method</span>
+        <span class="slbl" id="lb1">Photos</span>
+        <span class="slbl" id="lb2">Review</span>
+        <span class="slbl" id="lb3">Done</span>
+      </div>
+    </div>
+
+    <!-- Utility alert banner -->
+    <div class="ubanner">
+      <div class="uico">&#9889;</div>
+      <div>
+        <div class="utitle">Planned Gas Outage &mdash; Your Building</div>
+        <div class="udesc">Gas off June 12, 8AM&ndash;4PM. No hot water or heating during this time.</div>
+        <div class="utime">&#128197; Reminder sent 48 hrs before</div>
+      </div>
+    </div>
+
+    <!-- STEP 0: METHOD -->
+    <div class="step on" id="s0">
+      <div class="card">
+        <div class="ctitle">How do you want to report?</div>
+        <div class="csub">Photo option takes under 30 seconds &mdash; AI does the description for you.</div>
+        <button class="mode-btn" onclick="pickMode('photo')">
+          <span class="mico">&#128247;</span>
+          <div>
+            <div class="mtitle">Take or upload photos</div>
+            <div class="mdesc">Up to 5 photos &middot; AI describes the issue automatically</div>
+          </div>
+        </button>
+        <button class="mode-btn" onclick="pickMode('manual')">
+          <span class="mico">&#9999;&#65039;</span>
+          <div>
+            <div class="mtitle">Describe it myself</div>
+            <div class="mdesc">Fill in a short form &middot; Add up to 5 photos optionally</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 1A: PHOTO MODE -->
+    <div class="step" id="s1photo">
+      <div class="card">
+        <div class="ctitle">Upload photos of the issue</div>
+        <div class="csub">Up to 5 photos. More photos = better AI analysis and faster repair.</div>
+        <div class="pgrid" id="photoGrid"></div>
+        <div class="pcount" id="photoCount">0 of 5 photos added</div>
+      </div>
+      <button class="pbtn" id="analyseBtn" disabled onclick="runAnalysis()">&#129302; Analyse</button>
+      <div class="note">Photos are sent to AI which identifies the issue, category and priority. You review everything before it is submitted.</div>
+    </div>
+
+    <!-- STEP 1B: MANUAL MODE -->
+    <div class="step" id="s1manual">
+      <div class="card">
+        <div class="ctitle">Describe the issue</div>
+        <div class="csub">Fill in the details below. You can also add photos to help the coordinator.</div>
+        <div class="ff">
+          <label class="fl">Category</label>
+          <select class="fi" id="mCat">
+            <option value="">Select a category</option>
+            <optgroup label="Interior">
+              <option>Plumbing</option>
+              <option>Electrical</option>
+              <option>Heating / Cooling</option>
+              <option>Appliance</option>
+              <option>Structural &mdash; Interior</option>
+              <option>Paint / Stains &mdash; Interior</option>
+              <option>Pest</option>
+            </optgroup>
+            <optgroup label="Exterior">
+              <option>Roofing</option>
+              <option>Yard / Landscaping</option>
+              <option>Paint / Stains &mdash; Exterior</option>
+              <option>Structural &mdash; Exterior</option>
+              <option>Driveway / Parking</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option>Common Area</option>
+              <option>Safety / Security</option>
+              <option>General &mdash; Other</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="ff">
+          <label class="fl">Description</label>
+          <textarea class="fi" id="mDesc" placeholder="e.g. Kitchen tap has been dripping for 2 days. Water pooling under the sink."></textarea>
+        </div>
+        <div class="ff">
+          <label class="fl">Where in your unit?</label>
+          <select class="fi" id="mLoc">
+            <option value="">Select location</option>
+            <option>Kitchen</option>
+            <option>Bathroom</option>
+            <option>Living room</option>
+            <option>Bedroom</option>
+            <option>Hallway</option>
+            <option>Yard / Garden</option>
+            <option>Roof</option>
+            <option>Exterior wall</option>
+            <option>Driveway / Parking</option>
+            <option>Common area</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="ff">
+          <label class="fl">How urgent?</label>
+          <select class="fi" id="mPrio">
+            <option value="">Select urgency</option>
+            <option value="High">High &mdash; needs urgent attention</option>
+            <option value="Medium">Medium &mdash; fix soon</option>
+            <option value="Low">Low &mdash; when convenient</option>
+          </select>
+        </div>
+        <div class="sep"></div>
+        <div class="ff" style="margin-bottom:0;margin-top:10px">
+          <label class="fl">Photos (optional &mdash; up to 5)</label>
+          <div class="pgrid" id="manualGrid" style="margin-top:8px"></div>
+          <div class="pcount" id="manualCount">0 of 5 photos added</div>
+        </div>
+      </div>
+      <button class="pbtn" onclick="submitManual()">Submit request &#8594;</button>
+    </div>
+
+    <!-- STEP 2: REVIEW -->
+    <div class="step" id="s2"></div>
+
+    <!-- STEP 3: SUCCESS -->
+    <div class="step" id="s3">
+      <div class="sico">&#10003;</div>
+      <div class="stitle">Request submitted!</div>
+      <div class="ssub">Received. We will update you when a technician is assigned.</div>
+      <div class="tref">
+        <div class="tref-lbl">Ticket number</div>
+        <div class="tref-num" id="tNum">#MNT-0001</div>
+      </div>
+      <div class="card">
+        <div class="drow"><span class="dk">Issue</span><span class="dv" id="sIssue">&#8212;</span></div>
+        <div class="drow"><span class="dk">Category</span><span class="dv" id="sCat">&#8212;</span></div>
+        <div class="drow"><span class="dk">Priority</span><span class="dv" id="sPrio">&#8212;</span></div>
+        <div class="drow"><span class="dk">Submitted</span><span class="dv" id="sTime">&#8212;</span></div>
+        <div class="drow"><span class="dk">Status</span><span class="dv" style="color:var(--warn)">Awaiting assignment</span></div>
+        <div id="sPhotoWrap" style="display:none;margin-top:8px">
+          <div class="dk" style="font-size:12px;margin-bottom:6px">Photos attached</div>
+          <div class="thumbs" id="thumbRow"></div>
+        </div>
+      </div>
+      <div class="note">Email confirmation sent to sarah.k@email.com. High priority requests are assigned within 24 hours.</div>
+      <button class="gbtn" onclick="resetAll()" style="margin-top:4px">+ Report another issue</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var mode=null,result=null,photos=[],manualPhotos=[],ctr=Math.floor(Math.random()*800)+100;
+var MAX=5;
+
+function setStep(n){
+  [0,1,2,3].forEach(function(i){
+    var d=document.getElementById('d'+i);
+    var lb=document.getElementById('lb'+i);
+    d.className='sdot'+(i<n?' done':i===n?' cur':'');
+    d.textContent=i<n?'\u2713':String(i+1);
+    if(lb)lb.className='slbl'+(i===n?' cur':'');
+    if(i<3){var l=document.getElementById('l'+i);if(l)l.className='sline'+(i<n?' done':'');}
+  });
+}
+function showStep(id,n){
+  document.querySelectorAll('.step').forEach(function(s){s.classList.remove('on');});
+  var el=document.getElementById(id);
+  if(el){el.classList.add('on');window.scrollTo(0,0);}
+  setStep(n);
+}
+function goBack(){showStep('s0',0);mode=null;}
+function pickMode(m){
+  mode=m;
+  if(m==='photo'){buildGrid('photoGrid',false);showStep('s1photo',1);}
+  else{buildGrid('manualGrid',true);showStep('s1manual',1);}
+}
+
+function buildGrid(gid,isManual){
+  var arr=isManual?manualPhotos:photos;
+  var grid=document.getElementById(gid);
+  if(!grid)return;
+  grid.innerHTML='';
+  for(var i=0;i<MAX;i++){
+    var cell=document.createElement('div');
+    cell.className='pcell'+(arr[i]?' filled':'');
+    if(arr[i]){
+      var img=document.createElement('img');
+      img.src=arr[i];img.alt='Photo';
+      cell.appendChild(img);
+      var rm=document.createElement('button');
+      rm.className='rm';rm.innerHTML='&times;';
+      rm.setAttribute('data-i',i);rm.setAttribute('data-m',isManual?'1':'0');
+      rm.onclick=function(e){e.stopPropagation();removePhoto(+this.getAttribute('data-i'),this.getAttribute('data-m')==='1');};
+      cell.appendChild(rm);
+    } else {
+      var ico=document.createElement('div');
+      ico.className='addico';ico.innerHTML='&#43;';
+      cell.appendChild(ico);
+      var inp=document.createElement('input');
+      inp.type='file';inp.accept='image/*';inp.multiple=true;
+      inp.setAttribute('data-m',isManual?'1':'0');
+      inp.onchange=function(e){onPhoto(e,this.getAttribute('data-m')==='1');};
+      cell.appendChild(inp);
+    }
+    grid.appendChild(cell);
+  }
+  updateCount(gid,isManual);
+  if(!isManual){
+    var btn=document.getElementById('analyseBtn');
+    if(btn)btn.disabled=(photos.length===0);
+  }
+}
+
+function onPhoto(e,isManual){
+  var arr=isManual?manualPhotos:photos;
+  var files=Array.from(e.target.files);
+  var remaining=MAX-arr.length;
+  files.slice(0,remaining).forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(ev){
+      arr.push(ev.target.result);
+      buildGrid(isManual?'manualGrid':'photoGrid',isManual);
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function removePhoto(idx,isManual){
+  if(isManual)manualPhotos.splice(idx,1);
+  else photos.splice(idx,1);
+  buildGrid(isManual?'manualGrid':'photoGrid',isManual);
+}
+
+function updateCount(gid,isManual){
+  var arr=isManual?manualPhotos:photos;
+  var cid=isManual?'manualCount':'photoCount';
+  var el=document.getElementById(cid);
+  if(el)el.textContent=arr.length+' of '+MAX+' photos added';
+}
+
+async function runAnalysis(){
+  showStep('s2',2);
+  document.getElementById('s2').innerHTML='<div class="card"><div class="loading"><div class="spin"></div><div class="lt">Analysing your photos\u2026</div><div class="ls">AI is identifying the issue, category and priority</div></div></div>';
+  try{
+    var content=[];
+    photos.forEach(function(p){
+      var mime=p.split(';')[0].split(':')[1];
+      var data=p.split(',')[1];
+      content.push({type:'image',source:{type:'base64',media_type:mime,data:data}});
+    });
+    content.push({type:'text',text:'You are a property maintenance assistant. Analyse these photos of a maintenance issue in a rental property unit. Return ONLY raw JSON with no markdown and no code blocks. Use exactly these keys: "issue" (short title, max 8 words), "category" (best fit from: Plumbing, Electrical, Heating-Cooling, Appliance, Structural-Interior, Paint-Stains-Interior, Pest, Roofing, Yard-Landscaping, Paint-Stains-Exterior, Structural-Exterior, Driveway-Parking, Common-Area, Safety-Security, General-Other), "location" (room or area in the property), "priority" (High, Medium, or Low), "description" (2 to 3 sentences describing what you see and the potential risk if not fixed). If image is unclear still return valid JSON with best assessment.'});
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:content}]})
+    });
+    var data=await resp.json();
+    var raw='';
+    if(data.content&&data.content[0])raw=data.content[0].text;
+    raw=raw.replace(/```json|```/g,'').trim();
+    result=JSON.parse(raw);
+  }catch(err){
+    result={issue:'Issue submitted via photo',category:'General-Other',location:'Unit',priority:'Medium',description:'Photo uploaded for coordinator review. AI analysis could not complete — coordinator will review the photos directly.'};
+  }
+  renderReview();
+}
+
+function renderReview(){
+  var pc=result.priority==='High'?'pH':result.priority==='Medium'?'pM':'pL';
+  var pi=result.priority==='High'?'\uD83D\uDD34':result.priority==='Medium'?'\uD83D\uDFE1':'\uD83D\uDFE2';
+  var ph='';
+  if(photos.length>0){
+    ph='<div style="margin-top:12px"><div style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">'+photos.length+' photo'+(photos.length>1?'s':'')+' attached</div><div class="thumbs">';
+    photos.forEach(function(p){ph+='<img class="thumb" src="'+p+'" alt="photo">';});
+    ph+='</div></div>';
+  }
+  document.getElementById('s2').innerHTML=
+    '<div class="card">'+
+      '<div class="ctitle">Review before submitting</div>'+
+      '<div class="csub">AI analysed your photo'+(photos.length>1?'s':'')+'. Confirm or tap Edit to change anything.</div>'+
+      '<div class="rcard">'+
+        '<span class="rbadge">\uD83E\uDD16 AI Analysis</span>'+
+        '<div class="rrow"><span class="rk">Issue</span><span class="rv">'+x(result.issue)+'</span></div>'+
+        '<div class="rrow"><span class="rk">Category</span><span class="rv">'+x(result.category)+'</span></div>'+
+        '<div class="rrow"><span class="rk">Location</span><span class="rv">'+x(result.location)+'</span></div>'+
+        '<div class="rrow"><span class="rk">Priority</span><span class="rv '+pc+'">'+pi+' '+x(result.priority)+'</span></div>'+
+        '<div class="rrow"><span class="rk">Description</span><span class="rv">'+x(result.description)+'</span></div>'+
+      '</div>'+ph+
+    '</div>'+
+    '<div class="twobtn">'+
+      '<button class="ybtn" onclick="confirmSubmit()">\u2713 Yes, submit</button>'+
+      '<button class="ebtn" onclick="goEdit()">\u270F\uFE0F Edit</button>'+
+    '</div>'+
+    '<div class="note">Not right? Tap Edit to correct any details before submitting.</div>';
+}
+
+function goEdit(){
+  mode='manual';
+  manualPhotos=photos.slice();
+  showStep('s1manual',1);
+  buildGrid('manualGrid',true);
+  if(result){
+    document.getElementById('mDesc').value=result.description||'';
+    document.getElementById('mLoc').value=result.location||'';
+    document.getElementById('mPrio').value=result.priority||'';
+  }
+}
+
+function submitManual(){
+  var cat=document.getElementById('mCat').value;
+  var desc=document.getElementById('mDesc').value.trim();
+  var loc=document.getElementById('mLoc').value;
+  var prio=document.getElementById('mPrio').value;
+  if(!cat||!desc||!loc||!prio){alert('Please fill in all fields.');return;}
+  result={issue:desc.slice(0,60),category:cat,location:loc,priority:prio,description:desc};
+  photos=manualPhotos.slice();
+  showSuccess();
+}
+
+function confirmSubmit(){showSuccess();}
+
+function showSuccess(){
+  ctr++;
+  var num='#MNT-'+String(ctr).padStart(4,'0');
+  var now=new Date();
+  var ts=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  showStep('s3',3);
+  document.getElementById('tNum').textContent=num;
+  document.getElementById('sIssue').textContent=result?result.issue:'—';
+  document.getElementById('sCat').textContent=result?result.category:'—';
+  document.getElementById('sPrio').textContent=result?result.priority:'—';
+  document.getElementById('sTime').textContent=ts;
+  if(photos.length>0){
+    document.getElementById('sPhotoWrap').style.display='block';
+    var tr=document.getElementById('thumbRow');
+    tr.innerHTML='';
+    photos.forEach(function(p){
+      var img=document.createElement('img');
+      img.className='thumb';img.src=p;img.alt='photo';
+      tr.appendChild(img);
+    });
+  }
+}
+
+function resetAll(){
+  mode=null;result=null;photos=[];manualPhotos=[];
+  ['mCat','mDesc','mLoc','mPrio'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('sPhotoWrap').style.display='none';
+  showStep('s0',0);
+}
+
+function x(s){
+  if(!s)return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+buildGrid('photoGrid',false);
+buildGrid('manualGrid',true);
+</script>
+</body>
+</html>
